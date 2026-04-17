@@ -9,9 +9,10 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLineEdit, QLabel,
     QDoubleSpinBox, QComboBox, QPushButton, QTabWidget, QGroupBox,
     QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView,
-    QFileDialog,
+    QFileDialog, QCheckBox,
 )
 from .. import db, printer
+from .. import APP_VERSION
 from .widgets import info, warn, confirm
 
 
@@ -147,20 +148,16 @@ class SettingsTab(QWidget):
         mv.addWidget(QLabel(
             "<b>Parts markup — customer-facing.</b> Each row is a cost band. "
             "Enter the <b>target profit %</b> you want on that band (e.g. 63.6 for "
-            "63.6%). The app automatically derives the price multiplier and uses "
-            "it on every estimate and invoice. The multiplier column on the right "
-            "is for reference only — you don't edit it."
+            "63.6%). The app applies that profit % on every estimate and invoice."
         ))
-        self.tier_tbl = QTableWidget(0, 3)
+        self.tier_tbl = QTableWidget(0, 2)
         self.tier_tbl.setHorizontalHeaderLabels([
-            "Cost band (up to …)", "Profit %", "Multiplier (auto)"
+            "Cost band (up to …)", "Profit %"
         ])
         self.tier_tbl.verticalHeader().setVisible(False)
         self.tier_tbl.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tier_tbl.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.tier_tbl.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.tier_tbl.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.tier_tbl.cellChanged.connect(self._tier_changed)
         mv.addWidget(self.tier_tbl)
 
         trow = QHBoxLayout()
@@ -170,6 +167,50 @@ class SettingsTab(QWidget):
         trow.addWidget(b_add); trow.addWidget(b_del); trow.addStretch(); trow.addWidget(b_reset)
         mv.addLayout(trow)
         tabs.addTab(mk, "Parts Markup")
+
+        # ----- Updates -----
+        upd = QWidget(); uv = QVBoxLayout(upd)
+        upd_box = QGroupBox(
+            "Automatic updates  —  pull new versions over the internet"
+        )
+        uf = QFormLayout(upd_box)
+        self.update_url = QLineEdit()
+        self.update_url.setPlaceholderText(
+            "https://upfrontautorepair207.com/upfront-shop/latest.json"
+        )
+        uf.addRow("Update manifest URL", self.update_url)
+        self.update_on_startup = QCheckBox(
+            "Check for updates automatically when the app starts"
+        )
+        uf.addRow("", self.update_on_startup)
+        self.update_last_lbl = QLabel("—")
+        self.update_last_lbl.setStyleSheet("color:#4a4a4a;")
+        uf.addRow("Last checked", self.update_last_lbl)
+        self.installed_version_lbl = QLabel(f"v{APP_VERSION}")
+        self.installed_version_lbl.setStyleSheet(
+            "color:#0B2545; font-weight:bold;"
+        )
+        uf.addRow("Installed version", self.installed_version_lbl)
+
+        check_row = QHBoxLayout()
+        check_row.addStretch()
+        self.btn_check_now = QPushButton("Check for updates now")
+        self.btn_check_now.clicked.connect(self._check_updates_now)
+        check_row.addWidget(self.btn_check_now)
+        uf.addRow("", self._wrap_row(check_row))
+
+        uv.addWidget(upd_box)
+
+        hint = QLabel(
+            "<i>Leave the URL blank to disable remote updates entirely. "
+            "Updates are cryptographically signed — the app refuses any "
+            "installer whose signature doesn't match the built-in key, "
+            "even if the web host is compromised.</i>"
+        )
+        hint.setWordWrap(True); hint.setStyleSheet("color:#4a4a4a;")
+        uv.addWidget(hint)
+        uv.addStretch()
+        tabs.addTab(upd, "Updates")
 
         # Save/Reload row
         row = QHBoxLayout()
@@ -185,6 +226,31 @@ class SettingsTab(QWidget):
         s = QDoubleSpinBox()
         s.setDecimals(3); s.setMaximum(100); s.setSingleStep(0.1); s.setSuffix(" %")
         return s
+
+    @staticmethod
+    def _wrap_row(layout: QHBoxLayout) -> QWidget:
+        w = QWidget(); w.setLayout(layout)
+        return w
+
+    def _check_updates_now(self):
+        """Run the manual update check without waiting for a save."""
+        # Persist whatever the user has typed into the URL field right now so
+        # the updater reads the fresh value on this click (otherwise it would
+        # use whatever was last saved).
+        db.set_setting(self.conn, "update_url",
+                        self.update_url.text().strip())
+        db.set_setting(
+            self.conn, "update_on_startup",
+            "1" if self.update_on_startup.isChecked() else "0",
+        )
+        # Lazy import to avoid any import cycle with main_window.
+        from .update_flow import check_for_updates_manual
+        check_for_updates_manual(self, self.conn)
+        self._refresh_last_checked()
+
+    def _refresh_last_checked(self):
+        ts = db.get_setting(self.conn, "update_last_checked", "")
+        self.update_last_lbl.setText(ts or "—")
 
     # -------------- load / save --------------
 
@@ -213,6 +279,12 @@ class SettingsTab(QWidget):
         self.logo_path_edit.setText(g("logo_path", ""))
         self.review_url.setText(g("review_url", ""))
         self.review_cta.setText(g("review_cta", "Scan to leave us a review"))
+        self.update_url.setText(g(
+            "update_url",
+            "https://upfrontautorepair207.com/upfront-shop/latest.json",
+        ))
+        self.update_on_startup.setChecked(g("update_on_startup", "1") == "1")
+        self._refresh_last_checked()
         self._refresh_logo_preview()
         self._refresh_printers()
         self._load_tiers()
@@ -288,14 +360,11 @@ class SettingsTab(QWidget):
         p = QTableWidgetItem(f"{pct:.1f}")
         p.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.tier_tbl.setItem(r, 1, p)
-        # col 2: multiplier (read-only, derived)
-        m = QTableWidgetItem(f"× {float(mult):.2f}")
-        m.setFlags(m.flags() & ~Qt.ItemIsEditable)
-        m.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.tier_tbl.setItem(r, 2, m)
 
     @staticmethod
     def _mult_to_pct(mult) -> float:
+        """Convert the DB-stored tier value to the target profit % shown in
+        the UI. Internal helper only — the multiplier is never displayed."""
         try:
             m = float(mult)
             if m <= 0: return 0.0
@@ -305,30 +374,18 @@ class SettingsTab(QWidget):
 
     @staticmethod
     def _pct_to_mult(pct) -> float:
-        """Derive a price multiplier from a target profit-margin percent.
-        profit% = (mult - 1)/mult   =>   mult = 1 / (1 - profit%)"""
+        """Convert the UI profit % back to the value stored in the DB tier
+        row. Internal helper only — kept so we don't have to touch the DB
+        schema. profit% = (mult - 1)/mult   =>   mult = 1 / (1 - profit%)"""
         p = float(pct) / 100.0
         if p < 0: p = 0.0
-        if p >= 0.999:  # sanity cap to avoid divide-by-zero / silly multipliers
+        if p >= 0.999:  # sanity cap to avoid divide-by-zero / silly values
             p = 0.999
         return 1.0 / (1.0 - p)
 
-    def _tier_changed(self, row, col):
-        if col == 1:
-            item = self.tier_tbl.item(row, 1)
-            if not item: return
-            try:
-                pct = float(item.text())
-            except ValueError:
-                return
-            mult = self._pct_to_mult(pct)
-            self.tier_tbl.blockSignals(True)
-            self.tier_tbl.item(row, 2).setText(f"× {mult:.2f}")
-            self.tier_tbl.blockSignals(False)
-
     def _tier_add(self):
         self.tier_tbl.blockSignals(True)
-        # new tier defaults to 50% profit (= ×2.00)
+        # new tier defaults to 50% profit
         self._tier_append_row(None, 2.00)
         self.tier_tbl.blockSignals(False)
 
@@ -340,7 +397,8 @@ class SettingsTab(QWidget):
     def _tier_reset(self):
         if not confirm(self, "Reset markup tiers",
                        "Replace the current markup tiers with the shop default table "
-                       "(4.00× down to 1.70× across 9 bands)?"):
+                       "(9 bands from 75% profit on the cheapest parts down to "
+                       "41% profit on the most expensive)?"):
             return
         self.conn.execute("DELETE FROM markup_tiers")
         self.conn.executemany(
@@ -376,6 +434,9 @@ class SettingsTab(QWidget):
             ("logo_path", self.logo_path_edit.text().strip()),
             ("review_url", self.review_url.text().strip()),
             ("review_cta", self.review_cta.text().strip() or "Scan to leave us a review"),
+            ("update_url", self.update_url.text().strip()),
+            ("update_on_startup",
+             "1" if self.update_on_startup.isChecked() else "0"),
         ]
         for k, v in pairs:
             db.set_setting(self.conn, k, v)

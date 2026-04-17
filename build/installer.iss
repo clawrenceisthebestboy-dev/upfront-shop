@@ -11,7 +11,7 @@
 ; Requires a prior PyInstaller build (see build\upfront.spec and build\build.bat).
 
 #define MyAppName     "Up Front Shop"
-#define MyAppVersion  "1.5.0"
+#define MyAppVersion  "1.6.0"
 #define MyAppPublisher "Up Front Auto Repair"
 #define MyAppExeName  "UpFrontShop.exe"
 
@@ -32,6 +32,9 @@ WizardStyle=modern
 PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64
 UninstallDisplayIcon={app}\{#MyAppExeName}
+; Installer shell icon (shown in Explorer before the user launches it)
+; and in the wizard title bar. Uses the multi-resolution .ico we ship.
+SetupIconFile=..\resources\upfront_logo.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

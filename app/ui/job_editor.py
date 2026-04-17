@@ -16,6 +16,7 @@ from .. import db, repo
 from ..pricing import LineItem, compute_totals
 from ..markup import marked_up_price
 from ..invoice_pdf import render_invoice_pdf
+from ..work_order_pdf import render_work_order_pdf
 from ..printer import print_pdf, output_dir
 from .widgets import confirm, warn, info
 
@@ -147,6 +148,12 @@ class JobEditor(QDialog):
         self.btn_save.clicked.connect(self._save)
         self.btn_print_est = QPushButton("Print Estimate")
         self.btn_print_est.clicked.connect(lambda: self._print("Estimate"))
+        self.btn_print_wo = QPushButton("Print Work Order")
+        self.btn_print_wo.setToolTip(
+            "Print a tech-facing work order for this job.\n"
+            "No pricing, no labor times — just what needs to be done."
+        )
+        self.btn_print_wo.clicked.connect(self._print_work_order)
         self.btn_convert = QPushButton("Convert to Invoice")
         self.btn_convert.clicked.connect(self._convert_to_invoice)
         self.btn_print_inv = QPushButton("Print Invoice")
@@ -156,7 +163,7 @@ class JobEditor(QDialog):
         self.btn_close_cash.clicked.connect(self._close_cash)
         self.btn_close_card = QPushButton("Mark PAID (Card/Check)")
         self.btn_close_card.clicked.connect(self._close_card)
-        for b in (self.btn_save, self.btn_print_est, self.btn_convert,
+        for b in (self.btn_save, self.btn_print_est, self.btn_print_wo, self.btn_convert,
                   self.btn_print_inv, self.btn_close_card, self.btn_close_cash):
             ab.addWidget(b)
         ab.addStretch()
@@ -427,6 +434,46 @@ class JobEditor(QDialog):
             info(self, "Printing", f"Sent to printer: {printer or '(system default)'}\n\nFile: {out}")
         else:
             warn(self, "Printing", f"Could not print automatically.\nOpen and print manually: {out}")
+
+    def _print_work_order(self):
+        """Render + print a tech-facing work order for this job.
+
+        Work orders intentionally carry no pricing and no labor times.
+        They're print-only (the PDF is written to the same output dir
+        the customer invoices land in, but nothing is persisted to the
+        database — consistent with the Work Orders tab behavior)."""
+        if not self._save():
+            return
+        job = dict(repo.get_job(self.conn, self.job_id))
+        customer = dict(repo.get_customer(self.conn, job["customer_id"]))
+        vehicle = None
+        if job["vehicle_id"]:
+            row = self.conn.execute(
+                "SELECT * FROM vehicles WHERE id=?", (job["vehicle_id"],),
+            ).fetchone()
+            vehicle = dict(row) if row else None
+        lines = repo.load_lines(self.conn, self.job_id)
+        out = output_dir() / (
+            f"work_order_{job['number']}_{dt.date.today().isoformat()}.pdf"
+        )
+        try:
+            render_work_order_pdf(
+                str(out),
+                shop={k: self._settings.get(k, "") for k in self._settings},
+                customer=customer, vehicle=vehicle,
+                job=job, lines=lines,
+            )
+        except Exception as e:
+            warn(self, "Work order", f"Couldn't render work order: {e}")
+            return
+        printer = self._settings.get("printer_name") or None
+        ok = print_pdf(out, printer)
+        if ok:
+            info(self, "Work order printing",
+                 f"Sent to printer: {printer or '(system default)'}\n\nFile: {out}")
+        else:
+            warn(self, "Work order",
+                 f"Could not print automatically.\nOpen and print manually: {out}")
 
     def _convert_to_invoice(self):
         if not self._save(): return

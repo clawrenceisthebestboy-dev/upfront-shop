@@ -163,6 +163,18 @@ DEFAULT_SETTINGS = {
     "logo_path": "",              # absolute path to shop logo image (PNG/JPG). Blank = text-only header.
     "review_url": "https://upfrontautorepair207.com",    # QR code target on invoices
     "review_cta": "Scan to leave us a review",
+    # ---- Auto-updater ----
+    # Public URL to the signed manifest. Leave blank to disable remote updates
+    # entirely (the Check for updates… menu will say "no URL configured").
+    "update_url": "https://upfrontautorepair207.com/upfront-shop/latest.json",
+    # '1' = run a quiet check on app launch; '0' = only check when the user
+    # clicks File → Check for updates…. Default on so the shop laptop stays
+    # current without anyone remembering to click a button.
+    "update_on_startup": "1",
+    # ISO timestamp of the last successful check. Informational only — the
+    # updater doesn't skip a check based on this; it's shown in Settings so
+    # Josh can eyeball whether the laptop is reaching the update server.
+    "update_last_checked": "",
 }
 
 
