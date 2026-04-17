@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
 from .. import db
 from ..resources import resource_path
 from .jobs_tab import JobsTab
+from .work_orders_tab import WorkOrdersTab
 from .customers_tab import CustomersTab
 from .inventory_tab import InventoryTab
 from .timeclock_tab import TimeClockTab
@@ -53,6 +54,7 @@ class MainWindow(QMainWindow):
         tabs = QTabWidget()
         tabs.setMovable(False)
         self.tab_jobs = JobsTab(conn)
+        self.tab_work_orders = WorkOrdersTab(conn)
         self.tab_customers = CustomersTab(conn)
         self.tab_inventory = InventoryTab(conn)
         self.tab_timeclock = TimeClockTab(conn)
@@ -60,6 +62,7 @@ class MainWindow(QMainWindow):
         self.tab_reminders = RemindersTab(conn)
         self.tab_settings = SettingsTab(conn)
         tabs.addTab(self.tab_jobs, "Jobs / Invoices")
+        tabs.addTab(self.tab_work_orders, "Work Orders")
         tabs.addTab(self.tab_customers, "Customers")
         tabs.addTab(self.tab_inventory, "Inventory / Vendors")
         tabs.addTab(self.tab_timeclock, "Time Clock")
