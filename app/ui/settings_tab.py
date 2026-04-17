@@ -9,9 +9,10 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLineEdit, QLabel,
     QDoubleSpinBox, QComboBox, QPushButton, QTabWidget, QGroupBox,
     QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView,
-    QFileDialog,
+    QFileDialog, QCheckBox,
 )
 from .. import db, printer
+from .. import APP_VERSION
 from .widgets import info, warn, confirm
 
 
@@ -167,6 +168,50 @@ class SettingsTab(QWidget):
         mv.addLayout(trow)
         tabs.addTab(mk, "Parts Markup")
 
+        # ----- Updates -----
+        upd = QWidget(); uv = QVBoxLayout(upd)
+        upd_box = QGroupBox(
+            "Automatic updates  —  pull new versions over the internet"
+        )
+        uf = QFormLayout(upd_box)
+        self.update_url = QLineEdit()
+        self.update_url.setPlaceholderText(
+            "https://upfrontautorepair207.com/upfront-shop/latest.json"
+        )
+        uf.addRow("Update manifest URL", self.update_url)
+        self.update_on_startup = QCheckBox(
+            "Check for updates automatically when the app starts"
+        )
+        uf.addRow("", self.update_on_startup)
+        self.update_last_lbl = QLabel("—")
+        self.update_last_lbl.setStyleSheet("color:#4a4a4a;")
+        uf.addRow("Last checked", self.update_last_lbl)
+        self.installed_version_lbl = QLabel(f"v{APP_VERSION}")
+        self.installed_version_lbl.setStyleSheet(
+            "color:#0B2545; font-weight:bold;"
+        )
+        uf.addRow("Installed version", self.installed_version_lbl)
+
+        check_row = QHBoxLayout()
+        check_row.addStretch()
+        self.btn_check_now = QPushButton("Check for updates now")
+        self.btn_check_now.clicked.connect(self._check_updates_now)
+        check_row.addWidget(self.btn_check_now)
+        uf.addRow("", self._wrap_row(check_row))
+
+        uv.addWidget(upd_box)
+
+        hint = QLabel(
+            "<i>Leave the URL blank to disable remote updates entirely. "
+            "Updates are cryptographically signed — the app refuses any "
+            "installer whose signature doesn't match the built-in key, "
+            "even if the web host is compromised.</i>"
+        )
+        hint.setWordWrap(True); hint.setStyleSheet("color:#4a4a4a;")
+        uv.addWidget(hint)
+        uv.addStretch()
+        tabs.addTab(upd, "Updates")
+
         # Save/Reload row
         row = QHBoxLayout()
         row.addStretch()
@@ -181,6 +226,31 @@ class SettingsTab(QWidget):
         s = QDoubleSpinBox()
         s.setDecimals(3); s.setMaximum(100); s.setSingleStep(0.1); s.setSuffix(" %")
         return s
+
+    @staticmethod
+    def _wrap_row(layout: QHBoxLayout) -> QWidget:
+        w = QWidget(); w.setLayout(layout)
+        return w
+
+    def _check_updates_now(self):
+        """Run the manual update check without waiting for a save."""
+        # Persist whatever the user has typed into the URL field right now so
+        # the updater reads the fresh value on this click (otherwise it would
+        # use whatever was last saved).
+        db.set_setting(self.conn, "update_url",
+                        self.update_url.text().strip())
+        db.set_setting(
+            self.conn, "update_on_startup",
+            "1" if self.update_on_startup.isChecked() else "0",
+        )
+        # Lazy import to avoid any import cycle with main_window.
+        from .update_flow import check_for_updates_manual
+        check_for_updates_manual(self, self.conn)
+        self._refresh_last_checked()
+
+    def _refresh_last_checked(self):
+        ts = db.get_setting(self.conn, "update_last_checked", "")
+        self.update_last_lbl.setText(ts or "—")
 
     # -------------- load / save --------------
 
@@ -209,6 +279,12 @@ class SettingsTab(QWidget):
         self.logo_path_edit.setText(g("logo_path", ""))
         self.review_url.setText(g("review_url", ""))
         self.review_cta.setText(g("review_cta", "Scan to leave us a review"))
+        self.update_url.setText(g(
+            "update_url",
+            "https://upfrontautorepair207.com/upfront-shop/latest.json",
+        ))
+        self.update_on_startup.setChecked(g("update_on_startup", "1") == "1")
+        self._refresh_last_checked()
         self._refresh_logo_preview()
         self._refresh_printers()
         self._load_tiers()
@@ -358,6 +434,9 @@ class SettingsTab(QWidget):
             ("logo_path", self.logo_path_edit.text().strip()),
             ("review_url", self.review_url.text().strip()),
             ("review_cta", self.review_cta.text().strip() or "Scan to leave us a review"),
+            ("update_url", self.update_url.text().strip()),
+            ("update_on_startup",
+             "1" if self.update_on_startup.isChecked() else "0"),
         ]
         for k, v in pairs:
             db.set_setting(self.conn, k, v)

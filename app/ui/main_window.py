@@ -1,11 +1,12 @@
 """Main window — wires every tab together."""
 from __future__ import annotations
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QFont, QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QStatusBar, QLabel, QMessageBox,
 )
 from .. import db
+from .. import APP_VERSION
 from ..resources import resource_path
 from .jobs_tab import JobsTab
 from .work_orders_tab import WorkOrdersTab
@@ -15,6 +16,7 @@ from .timeclock_tab import TimeClockTab
 from .reports_tab import ReportsTab
 from .reminders_tab import RemindersTab
 from .settings_tab import SettingsTab
+from .update_flow import check_for_updates_manual, check_for_updates_startup
 
 
 APP_STYLESHEET = """
@@ -75,12 +77,29 @@ class MainWindow(QMainWindow):
         self._build_menu()
         self._build_status_bar()
 
+        # Fire the silent startup update check a few seconds after the
+        # window is on-screen. Delayed so it doesn't block first paint,
+        # and so the QApplication/event loop is already running when the
+        # progress / confirm dialogs (if any) open.
+        QTimer.singleShot(
+            3000, lambda: check_for_updates_startup(self, self.conn)
+        )
+
     def _build_menu(self):
         bar = self.menuBar()
         file_m = bar.addMenu("&File")
+        act_check_updates = QAction("Check for &updates…", self)
+        act_check_updates.triggered.connect(self._check_for_updates)
         act_about = QAction("&About…", self); act_about.triggered.connect(self._about)
         act_quit = QAction("E&xit", self); act_quit.triggered.connect(self.close)
-        file_m.addAction(act_about); file_m.addSeparator(); file_m.addAction(act_quit)
+        file_m.addAction(act_check_updates)
+        file_m.addSeparator()
+        file_m.addAction(act_about)
+        file_m.addSeparator()
+        file_m.addAction(act_quit)
+
+    def _check_for_updates(self):
+        check_for_updates_manual(self, self.conn)
 
     def _build_status_bar(self):
         sb = QStatusBar(); self.setStatusBar(sb)
@@ -101,6 +120,7 @@ class MainWindow(QMainWindow):
     def _about(self):
         QMessageBox.about(self, "About Up Front Shop",
             "<h3>Up Front Shop</h3>"
+            f"<p>Version <b>{APP_VERSION}</b></p>"
             f"<p>Shop management for <b>{db.get_setting(self.conn,'shop_name','Up Front Auto Repair')}</b></p>"
             "<p>Built to replace QuickBooks for day-to-day estimates, invoices, "
             "inventory, time-clock, and monthly P&amp;L reporting.</p>"
