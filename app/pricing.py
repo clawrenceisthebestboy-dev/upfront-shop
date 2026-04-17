@@ -8,7 +8,7 @@ Line items:
   - unit_price       (customer-facing unit price)
   - taxable          (parts default True, labor default False)
 
-Pricing policy (set April 2026 per Josh):
+Pricing policy (set April 2026 per Jon):
   Every invoice AUTOMATICALLY adds a 3.5% non-cash adjustment across
   the entire invoice. Customers paying with CASH or CHECK receive a
   matching 3.5% discount (effectively cancelling the adjustment).

@@ -139,7 +139,7 @@ def compute_month_pl(conn: sqlite3.Connection, year: int, month: int,
         # COGS
         "parts_cost": parts_cost,
         "wage_cost": wage_cost,
-        # Profit split — the thing Josh wants called out
+        # Profit split — the thing Jon wants called out
         "parts_profit": parts_profit,
         "labor_profit": labor_profit,
         "parts_margin_pct": parts_margin_pct,

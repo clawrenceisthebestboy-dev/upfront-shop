@@ -1,6 +1,6 @@
 """Tiered parts markup.
 
-Default table matches Josh's posted matrix:
+Default table matches Jon's posted matrix:
   $0.00 - $2.50     x4.00
   $2.51 - $5.00     x3.75
   $5.01 - $10.00    x3.00

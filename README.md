@@ -43,7 +43,7 @@ Every estimate and invoice automatically includes a **3.5 % non-cash adjustment*
 
 **Reminders.** Upcoming inspections, oil changes, follow-ups. "Scan vehicles for inspection expiration" creates reminders automatically for any vehicle with a sticker expiring in the next 60 days.
 
-**Monthly Profit & Loss.** Generate a month's P&L PDF with parts profit and labor profit **broken out separately** (Josh's requirement — parts profit from markup vs. labor profit from timeclocked wages). Enter cash sales externally since cash jobs are deleted from the DB after printing.
+**Monthly Profit & Loss.** Generate a month's P&L PDF with parts profit and labor profit **broken out separately** (Jon's requirement — parts profit from markup vs. labor profit from timeclocked wages). Enter cash sales externally since cash jobs are deleted from the DB after printing.
 
 **Printing.** Regular 8.5×11 PDF invoices sent to any WiFi / network printer the Windows laptop can see. Pick the printer in **Settings → Printer**, or leave it on *(system default)*.
 
@@ -101,7 +101,7 @@ build\build.bat
 After the script finishes you'll have:
 
 - `dist\UpFrontShop\UpFrontShop.exe` — portable app folder (zip and copy anywhere)
-- `dist\UpFrontShopSetup.exe` — the **one-file installer** you can host on a web link for Josh to download on the shop laptop off-site.
+- `dist\UpFrontShopSetup.exe` — the **one-file installer** you can host on a web link for Jon to download on the shop laptop off-site.
 
 Drop `UpFrontShopSetup.exe` into any file host (Google Drive, Dropbox, your website) and share the download link.
 
