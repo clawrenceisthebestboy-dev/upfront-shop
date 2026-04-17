@@ -76,10 +76,7 @@ app = BUNDLE(
     name="UpFrontShop.app",
     # If a resources/app-icon.icns exists we use it; otherwise PyInstaller
     # supplies a default rocket icon. Either is fine.
-    icon=("../resources/app-icon.icns"
-          if os.path.exists(os.path.join(os.path.dirname(__file__),
-                                         "..", "resources", "app-icon.icns"))
-          else None),
+    icon=None,
     bundle_identifier="com.upfrontauto.upfrontshop",
     info_plist={
         "CFBundleName": "Up Front Shop",
