@@ -1,0 +1,74 @@
+name: Build Windows Installer
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Create venv and install dependencies
+        run: |
+          python -m venv .venv
+          .venv\Scripts\activate.bat
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller==6.9.0
+
+      - name: Download and install Inno Setup
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = "$env:TEMP\innosetup-6.4.1.exe"
+          curl -L -o $installer "https://jrsoftware.org/download.php/is.exe"
+          Start-Process -Wait -FilePath $installer -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART"
+          Write-Host "Inno Setup installed"
+
+      - name: Build PyInstaller app
+        run: |
+          .venv\Scripts\activate.bat
+          pyinstaller --clean --noconfirm build/upfront.spec
+
+      - name: Build Inno Setup installer
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          & $iscc build/installer.iss
+
+      - name: Locate built files
+        run: |
+          Get-ChildItem -Recurse dist/ | Format-Table Name, Length, FullName
+
+      - name: Upload installer as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UpFrontShop-installer
+          path: dist/UpFrontShopSetup.exe
+          retention-days: 30
+
+      - name: Create or update GitHub Release
+        id: release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          release_name: UpFrontShop Latest Build
+          artifacts: dist/UpFrontShopSetup.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print download URL
+        run: |
+          $exe = Get-ChildItem dist/UpFrontShopSetup.exe | Select-Object -First 1
+          Write-Host "Installer: $exe"
+          Write-Host "Size: $([math]::Round($exe.Length / 1MB, 2)) MB"

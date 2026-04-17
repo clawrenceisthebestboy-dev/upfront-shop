@@ -11,7 +11,7 @@
 ; Requires a prior PyInstaller build (see build\upfront.spec and build\build.bat).
 
 #define MyAppName     "Up Front Shop"
-#define MyAppVersion  "1.0.0"
+#define MyAppVersion  "1.4.0"
 #define MyAppPublisher "Up Front Auto Repair"
 #define MyAppExeName  "UpFrontShop.exe"
 
