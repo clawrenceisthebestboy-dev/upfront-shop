@@ -147,20 +147,16 @@ class SettingsTab(QWidget):
         mv.addWidget(QLabel(
             "<b>Parts markup — customer-facing.</b> Each row is a cost band. "
             "Enter the <b>target profit %</b> you want on that band (e.g. 63.6 for "
-            "63.6%). The app automatically derives the price multiplier and uses "
-            "it on every estimate and invoice. The multiplier column on the right "
-            "is for reference only — you don't edit it."
+            "63.6%). The app applies that profit % on every estimate and invoice."
         ))
-        self.tier_tbl = QTableWidget(0, 3)
+        self.tier_tbl = QTableWidget(0, 2)
         self.tier_tbl.setHorizontalHeaderLabels([
-            "Cost band (up to …)", "Profit %", "Multiplier (auto)"
+            "Cost band (up to …)", "Profit %"
         ])
         self.tier_tbl.verticalHeader().setVisible(False)
         self.tier_tbl.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tier_tbl.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.tier_tbl.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.tier_tbl.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.tier_tbl.cellChanged.connect(self._tier_changed)
         mv.addWidget(self.tier_tbl)
 
         trow = QHBoxLayout()
@@ -288,14 +284,11 @@ class SettingsTab(QWidget):
         p = QTableWidgetItem(f"{pct:.1f}")
         p.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.tier_tbl.setItem(r, 1, p)
-        # col 2: multiplier (read-only, derived)
-        m = QTableWidgetItem(f"× {float(mult):.2f}")
-        m.setFlags(m.flags() & ~Qt.ItemIsEditable)
-        m.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.tier_tbl.setItem(r, 2, m)
 
     @staticmethod
     def _mult_to_pct(mult) -> float:
+        """Convert the DB-stored tier value to the target profit % shown in
+        the UI. Internal helper only — the multiplier is never displayed."""
         try:
             m = float(mult)
             if m <= 0: return 0.0
@@ -305,30 +298,18 @@ class SettingsTab(QWidget):
 
     @staticmethod
     def _pct_to_mult(pct) -> float:
-        """Derive a price multiplier from a target profit-margin percent.
-        profit% = (mult - 1)/mult   =>   mult = 1 / (1 - profit%)"""
+        """Convert the UI profit % back to the value stored in the DB tier
+        row. Internal helper only — kept so we don't have to touch the DB
+        schema. profit% = (mult - 1)/mult   =>   mult = 1 / (1 - profit%)"""
         p = float(pct) / 100.0
         if p < 0: p = 0.0
-        if p >= 0.999:  # sanity cap to avoid divide-by-zero / silly multipliers
+        if p >= 0.999:  # sanity cap to avoid divide-by-zero / silly values
             p = 0.999
         return 1.0 / (1.0 - p)
 
-    def _tier_changed(self, row, col):
-        if col == 1:
-            item = self.tier_tbl.item(row, 1)
-            if not item: return
-            try:
-                pct = float(item.text())
-            except ValueError:
-                return
-            mult = self._pct_to_mult(pct)
-            self.tier_tbl.blockSignals(True)
-            self.tier_tbl.item(row, 2).setText(f"× {mult:.2f}")
-            self.tier_tbl.blockSignals(False)
-
     def _tier_add(self):
         self.tier_tbl.blockSignals(True)
-        # new tier defaults to 50% profit (= ×2.00)
+        # new tier defaults to 50% profit
         self._tier_append_row(None, 2.00)
         self.tier_tbl.blockSignals(False)
 
@@ -340,7 +321,8 @@ class SettingsTab(QWidget):
     def _tier_reset(self):
         if not confirm(self, "Reset markup tiers",
                        "Replace the current markup tiers with the shop default table "
-                       "(4.00× down to 1.70× across 9 bands)?"):
+                       "(9 bands from 75% profit on the cheapest parts down to "
+                       "41% profit on the most expensive)?"):
             return
         self.conn.execute("DELETE FROM markup_tiers")
         self.conn.executemany(
