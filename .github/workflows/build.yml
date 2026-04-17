@@ -56,12 +56,11 @@ jobs:
           retention-days: 30
 
       - name: Create or update GitHub Release
-        id: release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: latest
-          release_name: UpFrontShop Latest Build
-          artifacts: dist/UpFrontShopSetup.exe
+          name: UpFrontShop v1.4.0
+          files: dist/UpFrontShopSetup.exe
           draft: false
           prerelease: false
         env:
