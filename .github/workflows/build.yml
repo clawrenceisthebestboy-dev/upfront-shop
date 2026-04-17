@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -56,7 +58,7 @@ jobs:
           retention-days: 30
 
       - name: Create or update GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: UpFrontShop v1.4.0
