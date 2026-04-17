@@ -32,6 +32,9 @@ WizardStyle=modern
 PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64
 UninstallDisplayIcon={app}\{#MyAppExeName}
+; Installer shell icon (shown in Explorer before the user launches it)
+; and in the wizard title bar. Uses the multi-resolution .ico we ship.
+SetupIconFile=..\resources\upfront_logo.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

@@ -20,7 +20,9 @@ a = Analysis(
     ["..\\main.py"],
     pathex=[".."],
     binaries=[],
-    datas=[],
+    # Ship the resources/ folder so app.resources.resource_path() can find
+    # the window icon at runtime from the PyInstaller bundle.
+    datas=[("..\\resources", "resources")],
     hiddenimports=hidden,
     hookspath=[],
     hooksconfig={},
@@ -52,7 +54,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,                       # replace with .ico if you have one
+    icon="..\\resources\\upfront_logo.ico",
 )
 
 coll = COLLECT(

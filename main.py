@@ -12,9 +12,11 @@ import sys
 import traceback
 from pathlib import Path
 
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from app import db
+from app.resources import resource_path
 from app.ui.main_window import MainWindow
 
 
@@ -22,6 +24,12 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("Up Front Shop")
     app.setOrganizationName("Up Front Auto Repair")
+
+    # App-level icon: used in the Alt-Tab switcher, the Windows taskbar
+    # (when grouped by app), and as a fallback for every child window.
+    icon_path = resource_path("upfront_logo.png")
+    if icon_path.is_file():
+        app.setWindowIcon(QIcon(str(icon_path)))
 
     try:
         conn = db.connect()

@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QStatusBar, QLabel, QMessageBox,
 )
 from .. import db
+from ..resources import resource_path
 from .jobs_tab import JobsTab
 from .customers_tab import CustomersTab
 from .inventory_tab import InventoryTab
@@ -40,6 +41,12 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.conn = conn
         self.setWindowTitle(f"Up Front Shop  —  {db.get_setting(conn,'shop_name','Up Front Auto Repair')}")
+        # Window icon for the title bar + Windows taskbar preview. QApplication
+        # already has an app-wide icon set in main.py; this overrides per-window
+        # so dialogs launched from MainWindow inherit a sensible default too.
+        icon_path = resource_path("upfront_logo.png")
+        if icon_path.is_file():
+            self.setWindowIcon(QIcon(str(icon_path)))
         self.resize(1280, 820)
         self.setStyleSheet(APP_STYLESHEET)
 
