@@ -1,0 +1,95 @@
+name: Build macOS DMG (Apple Silicon)
+
+# When this runs:
+#   - Every push to main/master (so a fresh DMG is always available)
+#   - Every tag starting with "v" (e.g. v1.4.0) — also publishes to the Release
+#   - Manually from the Actions tab (workflow_dispatch)
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on macOS (arm64)
+    runs-on: macos-14         # macos-14 runners are Apple Silicon (M1)
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller==6.9.0
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Build .app with PyInstaller
+        run: pyinstaller --clean --noconfirm build/upfront-mac.spec
+
+      - name: Confirm the .app exists
+        run: |
+          if [ ! -d "dist/UpFrontShop.app" ]; then
+            echo "ERROR: dist/UpFrontShop.app was not produced" >&2
+            exit 1
+          fi
+          du -sh dist/UpFrontShop.app
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Build drag-to-Applications DMG
+        run: |
+          mkdir -p dist
+          DMG="dist/UpFrontShop-1.4.0-arm64.dmg"
+          rm -f "$DMG"
+          create-dmg \
+            --volname "Up Front Shop" \
+            --window-size 540 360 \
+            --icon-size 100 \
+            --icon "UpFrontShop.app" 140 180 \
+            --app-drop-link 400 180 \
+            --no-internet-enable \
+            "$DMG" \
+            "dist/UpFrontShop.app"
+
+      - name: Verify DMG exists
+        run: |
+          ls -la dist/UpFrontShop-1.4.0-arm64.dmg
+
+      - name: Compute SHA-256
+        run: |
+          shasum -a 256 dist/UpFrontShop-1.4.0-arm64.dmg \
+            | tee dist/UpFrontShop-1.4.0-arm64.dmg.sha256.txt
+
+      - name: Upload DMG as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UpFrontShop-macOS-arm64
+          path: |
+            dist/UpFrontShop-1.4.0-arm64.dmg
+            dist/UpFrontShop-1.4.0-arm64.dmg.sha256.txt
+          retention-days: 90
+
+      - name: Publish GitHub Release (tagged builds only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/UpFrontShop-1.4.0-arm64.dmg
+            dist/UpFrontShop-1.4.0-arm64.dmg.sha256.txt
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
