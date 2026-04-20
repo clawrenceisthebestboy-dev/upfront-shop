@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Up Front Shop — Download</title>
+<style>
+  :root {
+    --bg: #0f1722;
+    --card: #17223a;
+    --border: #2a3a58;
+    --text: #e8eef8;
+    --muted: #90a0bc;
+    --accent: #ff5a1f;
+    --accent-hover: #ff7a45;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+    background: radial-gradient(ellipse at top, #1a2642 0%, #0f1722 60%);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 20px;
+  }
+  .card {
+    width: 100%;
+    max-width: 620px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 36px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    text-align: center;
+  }
+  .logo {
+    width: 140px;
+    height: auto;
+    margin: 0 auto 24px;
+    display: block;
+  }
+  h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .tagline {
+    margin: 0 0 36px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 17px;
+    padding: 16px 32px;
+    border-radius: 10px;
+    transition: background 0.15s ease, transform 0.1s ease;
+    box-shadow: 0 6px 18px rgba(255, 90, 31, 0.35);
+  }
+  .download-btn:hover {
+    background: var(--accent-hover);
+  }
+  .download-btn:active {
+    transform: translateY(1px);
+  }
+  .download-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+  .meta {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .meta a {
+    color: var(--muted);
+    text-decoration: underline;
+  }
+  .steps {
+    margin-top: 40px;
+    text-align: left;
+    padding: 20px 24px;
+    background: rgba(255, 255, 255, 0.025);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .steps h2 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .steps ol {
+    margin: 0;
+    padding-left: 22px;
+    line-height: 1.6;
+    font-size: 14px;
+  }
+  .steps li {
+    margin-bottom: 4px;
+  }
+  .warn {
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: rgba(255, 180, 0, 0.08);
+    border: 1px solid rgba(255, 180, 0, 0.3);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #f5d46e;
+    line-height: 1.55;
+    text-align: left;
+  }
+  .warn strong { color: #ffcf5c; }
+  footer {
+    margin-top: 28px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img src="logo.png" alt="Up Front Auto Repair" class="logo"
+         onerror="this.style.display='none'" />
+    <h1>Up Front Shop</h1>
+    <p class="tagline">Shop management software for Up Front Auto Repair</p>
+
+    <a class="download-btn"
+       href="https://github.com/clawrenceisthebestboy-dev/upfront-shop/releases/latest/download/UpFrontShopSetup.exe"
+       rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 3v10.59l3.29-3.3 1.42 1.42L12 16.42l-4.71-4.71 1.42-1.42L12 13.59V3h0Zm-7 15h14v2H5v-2Z"/>
+      </svg>
+      Download for Windows
+    </a>
+
+    <p class="meta">
+      Latest installer —
+      <a href="https://github.com/clawrenceisthebestboy-dev/upfront-shop/releases/latest"
+         rel="noopener">view release notes</a>
+    </p>
+
+    <div class="steps">
+      <h2>How to install</h2>
+      <ol>
+        <li>Click <strong>Download for Windows</strong> above.</li>
+        <li>Open the downloaded <code>UpFrontShopSetup.exe</code>.</li>
+        <li>Click through the installer wizard (Next → Install → Finish).</li>
+        <li>Launch <strong>Up Front Shop</strong> from the Start Menu.</li>
+      </ol>
+    </div>
+
+    <div class="warn">
+      <strong>Heads up:</strong> the first time you run the installer,
+      Windows SmartScreen may show a blue warning ("Windows protected
+      your PC"). Click <strong>More info</strong>, then
+      <strong>Run anyway</strong>. The installer is unsigned but safe —
+      built automatically on GitHub from our public source code.
+    </div>
+  </div>
+
+  <footer>
+    Built automatically from
+    <a href="https://github.com/clawrenceisthebestboy-dev/upfront-shop"
+       rel="noopener">source on GitHub</a>.
+  </footer>
+</body>
+</html>
