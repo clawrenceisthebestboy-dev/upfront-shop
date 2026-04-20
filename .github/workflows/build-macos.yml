@@ -11,6 +11,9 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+permissions:
+  contents: write   # needed so softprops/action-gh-release can publish the Release
+
 jobs:
   build:
     name: Build on macOS (arm64)
