@@ -46,10 +46,14 @@ jobs:
         run: |
           pyinstaller --clean --noconfirm build\upfront.spec
 
-      - name: Install Inno Setup 6
+      - name: Install Inno Setup 6 (if missing)
         shell: cmd
         run: |
-          choco install innosetup --version=6.2.2 -y --no-progress
+          if exist "%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe" (
+            echo Inno Setup already present on runner - skipping install.
+          ) else (
+            choco install innosetup -y --no-progress
+          )
 
       - name: Compile installer with Inno Setup
         shell: cmd
