@@ -110,6 +110,10 @@ class ReportsTab(QWidget):
         year, month = self._month_params()
         try:
             pl = reports.compute_month_pl(self.conn, year, month)
+            # Guard: None values in pl dict cause "Invalid format string" in HTML template
+            for k, v in list(pl.items()):
+                if v is None:
+                    pl[k] = Decimal("0")
         except Exception as e:
             self.preview.setPlainText(f"Preview error: {e}")
             return
