@@ -82,9 +82,7 @@ from . import APP_VERSION
 # verification will fail — which is the correct fail-closed behaviour
 # for a dev build. Never ship to the shop laptop without a real key.
 # ===================================================================
-_RELEASE_PUBKEY_HEX: str = (
-    "0000000000000000000000000000000000000000000000000000000000000000"
-)
+_RELEASE_PUBKEY_HEX: str = "890380fe558f93b78d47e30fc08f91ea3409dc299e97231f5c51db5e902cec74"
 
 # Fields that go into the signed blob (in canonical order).
 # Anything NOT in this list is not protected by the signature.
