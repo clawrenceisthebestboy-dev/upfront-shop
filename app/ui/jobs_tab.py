@@ -168,7 +168,7 @@ class JobsTab(QWidget):
                 r["payment_method"] or "—",
                 (r["opened_at"] or "")[:16],
                 (r["paid_at"] or "")[:16] if r["paid_at"] else "—",
-                f"${r['paid_total']:,.2f}" if r["paid_total"] else "—",
+                f"${r['paid_total']:,.2f}" if r["paid_total"] is not None else "—",
             ]
             for c, vv in enumerate(cells):
                 it = ro(vv)

@@ -158,7 +158,7 @@ class TimeClockTab(QWidget):
         except Exception:
             return 0.0, 0.0
         end_s = r["clock_out"]
-        end = dt.datetime.fromisoformat(end_s) if end_s else dt.datetime.utcnow()
+        end = dt.datetime.fromisoformat(end_s) if end_s else dt.datetime.now()
         hours = max((end - start).total_seconds() / 3600.0, 0.0)
         wages = hours * float(r["hourly_rate"] or 0)
         return hours, wages

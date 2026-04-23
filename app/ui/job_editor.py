@@ -404,7 +404,10 @@ class JobEditor(QDialog):
         j = dict(repo.get_job(self.conn, self.job_id))
         c = dict(repo.get_customer(self.conn, j["customer_id"]))
         v_row = self.conn.execute("SELECT * FROM vehicles WHERE id=?", (j["vehicle_id"],)).fetchone() if j["vehicle_id"] else None
-        v = dict(v_row) if v_row else None
+        try:
+            v = dict(v_row) if v_row else None
+        except TypeError:
+            v = None
         lines = repo.load_lines(self.conn, self.job_id)
         method = j["payment_method"] or "unpaid"
         t = compute_totals(lines, payment_method=method, tax_rate=D(str(j["tax_rate"])))

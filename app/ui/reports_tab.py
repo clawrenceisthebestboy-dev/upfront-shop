@@ -135,6 +135,11 @@ class ReportsTab(QWidget):
             d = Decimal(str(v))
             s = f"${abs(d):,.2f}"
             return f"<span style='color:#C5363A'>({s})</span>" if d < 0 else s
+        def pct(v):
+            d = Decimal(str(v))
+            if d.is_nan():
+                return "0.0%"
+            return f"{d:.1f}%"
         return f"""
         <h2 style="color:#0B2545; margin-bottom:4px;">Profit &amp; Loss — {period_label}</h2>
         <p style="color:#4a4a4a; margin-top:0;">Preview (PDF will have full formatting)</p>
@@ -153,7 +158,7 @@ class ReportsTab(QWidget):
           <tr><td>Parts revenue</td><td align="right">{m(pl['parts_revenue'])}</td></tr>
           <tr><td>Parts cost</td><td align="right">{m(pl['parts_cost'])}</td></tr>
           <tr><td><b>Parts profit</b></td><td align="right"><b>{m(pl['parts_profit'])}</b></td></tr>
-          <tr><td>Parts margin</td><td align="right">{pl['parts_margin_pct']:.1f}%</td></tr>
+          <tr><td>Parts margin</td><td align="right">{pct(pl['parts_margin_pct'])}</td></tr>
         </table>
 
         <h3 style="color:#0B2545;">Labor — Profitability</h3>
@@ -161,7 +166,7 @@ class ReportsTab(QWidget):
           <tr><td>Labor revenue</td><td align="right">{m(pl['labor_revenue'])}</td></tr>
           <tr><td>Technician wages (timeclock)</td><td align="right">{m(pl['wage_cost'])}</td></tr>
           <tr><td><b>Labor profit</b></td><td align="right"><b>{m(pl['labor_profit'])}</b></td></tr>
-          <tr><td>Labor margin</td><td align="right">{pl['labor_margin_pct']:.1f}%</td></tr>
+          <tr><td>Labor margin</td><td align="right">{pct(pl['labor_margin_pct'])}</td></tr>
         </table>
 
         <h3 style="color:#0B2545;">Combined</h3>
@@ -169,7 +174,7 @@ class ReportsTab(QWidget):
           <tr><td>Parts profit + labor profit</td><td align="right">{m(pl['parts_profit'] + pl['labor_profit'])}</td></tr>
           <tr><td>Less card processor fees (est.)</td><td align="right">-{m(pl['processor_fee_est'])}</td></tr>
           <tr><td><b>GROSS PROFIT</b></td><td align="right"><b>{m(pl['gross_profit'])}</b></td></tr>
-          <tr><td>Blended gross margin</td><td align="right">{pl['gross_margin_pct']:.1f}%</td></tr>
+          <tr><td>Blended gross margin</td><td align="right">{pct(pl['gross_margin_pct'])}</td></tr>
         </table>
 
         <h3 style="color:#0B2545;">Other</h3>

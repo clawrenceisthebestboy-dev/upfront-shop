@@ -151,10 +151,6 @@ def _compute_pl(conn: sqlite3.Connection, start: str, end: str) -> Dict:
     # If there's no timeclock data, labor_profit == labor_rev (pure revenue).
     labor_profit = labor_rev - wage_cost
 
-    # Margin % per line
-    parts_margin_pct = (parts_profit / parts_rev * 100) if parts_rev > 0 else Decimal("0")
-    labor_margin_pct = (labor_profit / labor_rev * 100) if labor_rev > 0 else Decimal("0")
-
     gross_revenue = parts_rev + labor_rev
     # Card processing is approximately net-zero (surcharge ~ processor fee).
     processor_fee_est = card_fees_absorbed
@@ -163,6 +159,28 @@ def _compute_pl(conn: sqlite3.Connection, start: str, end: str) -> Dict:
     # Cash sales are intentionally excluded from this report — they're
     # tracked on paper per shop policy (see module docstring).
     gross_profit = parts_profit + labor_profit - processor_fee_est
+
+    # Margin % per line — guard against Decimal 0/0 producing NaN (no exception raised)
+    if parts_rev > 0:
+        parts_margin_pct = parts_profit / parts_rev * 100
+        if parts_margin_pct.is_nan():
+            parts_margin_pct = Decimal("0")
+    else:
+        parts_margin_pct = Decimal("0")
+
+    if labor_rev > 0:
+        labor_margin_pct = labor_profit / labor_rev * 100
+        if labor_margin_pct.is_nan():
+            labor_margin_pct = Decimal("0")
+    else:
+        labor_margin_pct = Decimal("0")
+
+    if net_revenue > 0:
+        gross_margin_pct = gross_profit / net_revenue * 100
+        if gross_margin_pct.is_nan():
+            gross_margin_pct = Decimal("0")
+    else:
+        gross_margin_pct = Decimal("0")
 
     return {
         "period_start": start, "period_end": end,
